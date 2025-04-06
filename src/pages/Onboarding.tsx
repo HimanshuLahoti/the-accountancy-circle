@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -42,8 +41,8 @@ const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  agreeTerms: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to the terms and privacy policy' }),
+  agreeTerms: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the terms and privacy policy',
   }),
 });
 
