@@ -9,6 +9,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import MainLayout from "./components/layout/MainLayout";
 
 import Index from "./pages/Home";
+import Onboarding from "./pages/Onboarding";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
@@ -29,6 +30,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<DashboardLayout />} />
