@@ -1,7 +1,8 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { User, AuthContextType } from '../types/auth';
 import { toast } from '@/components/ui/sonner';
+import { useGoogleLogin } from '@react-oauth/google';
 
 // Mock user data for demo purposes
 const mockUsers = [
@@ -25,11 +26,35 @@ const mockUsers = [
   }
 ];
 
+const LOCAL_STORAGE_KEY = 'accountancy_circle_user';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Load user from local storage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Failed to parse saved user:", error);
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  // Save user to local storage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }, [user]);
 
   const login = async (email: string, password: string, role: 'student' | 'faculty') => {
     setIsLoading(true);
@@ -45,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (matchedUser) {
         // Remove password from user object for security
         const { password: _, ...userWithoutPassword } = matchedUser;
-        setUser(userWithoutPassword as User);
+        setUser({ ...userWithoutPassword, provider: 'email' } as User);
         toast.success("Login successful!");
       } else {
         toast.error("Invalid credentials");
@@ -57,6 +82,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loginWithGoogle = async () => {
+    const googleLogin = useGoogleLogin({
+      onSuccess: async (response) => {
+        setIsLoading(true);
+        try {
+          // Fetch user info from Google
+          const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+              Authorization: `Bearer ${response.access_token}`,
+            },
+          });
+
+          if (!userInfoResponse.ok) {
+            throw new Error('Failed to fetch user info');
+          }
+
+          const userInfo = await userInfoResponse.json();
+
+          // Create a user object from Google data
+          const googleUser: User = {
+            id: userInfo.sub,
+            name: userInfo.name,
+            email: userInfo.email,
+            role: 'student', // Default role - can be changed later
+            avatar: userInfo.picture,
+            provider: 'google',
+          };
+
+          setUser(googleUser);
+          toast.success("Google login successful!");
+        } catch (error) {
+          console.error("Google login failed:", error);
+          toast.error("Google login failed");
+          throw error;
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      onError: (error) => {
+        console.error("Google login error:", error);
+        toast.error("Google login failed");
+      }
+    });
+
+    // Trigger the Google login flow
+    googleLogin();
   };
 
   const register = async (userData: Partial<User>, password: string) => {
@@ -96,6 +169,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading,
     login,
     register,
+    loginWithGoogle,
     logout
   };
 

@@ -7,6 +7,7 @@ export interface User {
   avatar?: string;
   course?: 'CA' | 'CS' | 'CMA';
   level?: 'Foundation' | 'Intermediate' | 'Final';
+  provider?: 'email' | 'google';
 }
 
 export interface AuthContextType {
@@ -15,5 +16,6 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string, role: 'student' | 'faculty') => Promise<void>;
   register: (userData: Partial<User>, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }

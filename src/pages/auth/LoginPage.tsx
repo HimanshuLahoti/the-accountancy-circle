@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { FaGoogle } from 'react-icons/fa';
 import {
   Card,
   CardContent,
@@ -33,7 +35,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
-  const { login, isLoading } = useAuth();
+  const { login, loginWithGoogle, isLoading } = useAuth();
   const navigate = useNavigate();
   const [activeRole, setActiveRole] = useState<'student' | 'faculty'>('student');
   
@@ -55,6 +57,15 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Google login failed', error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
       <Card className="w-full max-w-md">
@@ -65,6 +76,30 @@ const LoginPage: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="grid gap-4">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center gap-2"
+              disabled={isLoading}
+            >
+              <FaGoogle className="text-red-500" />
+              Sign in with Google
+            </Button>
+          </div>
+          
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          
           <Tabs defaultValue="student" className="w-full" onValueChange={(value) => setActiveRole(value as 'student' | 'faculty')}>
             <TabsList className="grid grid-cols-2 mb-6">
               <TabsTrigger value="student">Student</TabsTrigger>
